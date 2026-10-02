@@ -1,0 +1,19 @@
+storage: ~/.local/share/nucube
+max_workers: 4
+total_cpu: 4
+total_memory_mb: 2048
+allowed_images:
+  - python:3.12-slim
+max_job_seconds: 3600
+max_retries: 2
+allow_network: false
+artifact_retention_days: 7
+log_retention_days: 7
+max_snapshot_bytes: 16777216
+max_output_bytes: 67108864
+max_files: 2000
+max_log_bytes: 262144
+pids_limit: 128
+tmp_mb: 64
+retry_backoff_seconds: 2
+poll_seconds: 0.5
