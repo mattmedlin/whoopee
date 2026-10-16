@@ -40,6 +40,8 @@ void WhoopeeProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::Midi
     juce::ScopedNoDenormals noDenormals;
     buffer.clear();
     outputGain.setTargetValue(juce::Decibels::decibelsToGain(volume->load()));
+    const auto liveRasp = rasp->load();
+    for (auto& voice : voices) voice.setRasp(liveRasp);
     if (previewPending.exchange(false)) trigger(60, 0.9f);
     auto event = midi.cbegin();
     for (int sample = 0; sample < buffer.getNumSamples(); ++sample)

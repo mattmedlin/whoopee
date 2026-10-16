@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.22)
-project(Whoopee VERSION 1.0.0 LANGUAGES C CXX)
+project(Whoopee VERSION 1.0.1 LANGUAGES C CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 include(CTest)
@@ -42,7 +42,7 @@ target_compile_definitions(Whoopee PUBLIC
 target_link_libraries(Whoopee PRIVATE juce::juce_audio_utils
     PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_warning_flags)
 if(APPLE)
-    foreach(format AU Standalone)
+    foreach(format AU Standalone VST3)
         add_custom_command(TARGET Whoopee_${format} POST_BUILD
             COMMAND /usr/bin/codesign --force --sign - "$<TARGET_BUNDLE_DIR:Whoopee_${format}>")
     endforeach()

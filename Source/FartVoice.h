@@ -50,10 +50,15 @@ public:
         // Spread contact events across the requested duration while leaving
         // each contact pulse and resonator unchanged. Preserve the 0.8 s fit.
         eventStretch=static_cast<double>(duration)*ratio/0.8;
-        roughness=std::clamp(rasp,0.0f,1.0f)-0.55f;
+        raspValue=raspTarget=std::clamp(rasp,0.0f,1.0f);
+        raspPole=1-std::exp(-1.0/(0.015*sampleRate));
+        tonePole=1-std::exp(-6.28318530718*350/sampleRate);
+        envelopePole=1-std::exp(-1.0/(0.003*sampleRate));
+        tone=envelope=0;
         state.fill(0);history.fill(0);position=0;generated=-1;contact=0;age=0;
         release=1;previousForce=0;releasing=false;active=gain>0;
     }
+    void setRasp(float value) { raspTarget=std::clamp(value,0.0f,1.0f); }
     void noteOff(int note) { if(note==midiNote) releasing=true; }
     void stop() { active=false; }
     bool isActive() const { return active; }
@@ -68,6 +73,28 @@ public:
         {
             const int at=centre+k-15;
             if(at>=0) value+=history[static_cast<unsigned>(at)%history.size()]*interpolation[static_cast<size_t>(bank)][static_cast<size_t>(phase)][static_cast<size_t>(k)];
+        }
+        // A monotonic timbre control: low = damped/smooth, midpoint =
+        // calibrated reference, high = sharper closures and turbulent rasp.
+        // Runs after reconstruction so low-level force noise cannot disappear
+        // inside the heavily damped resonator. Smooth live automation.
+        raspValue+=raspPole*(raspTarget-raspValue);
+        tone+=tonePole*(value-tone);
+        envelope+=envelopePole*(std::abs(value)-envelope);
+        if(raspValue<0.55f)
+        {
+            const double mix=(0.55-raspValue)/0.55;
+            value+=(tone-value)*mix;
+        }
+        else if(raspValue>0.55f)
+        {
+            const double amount=(raspValue-0.55)/0.45;
+            random^=random<<13;random^=random>>17;random^=random<<5;
+            const double noise=random/2147483648.0-1;
+            const double edge=value-tone;
+            const double driven=std::tanh((value+1.5*edge*amount)*(1+3*amount))/(1+1.2*amount);
+            value+=(driven-value)*amount;
+            value+=noise*envelope*0.6*amount;
         }
         if(releasing) release=std::max(0.0f,release-static_cast<float>(1.0/(0.025*sampleRate)));
         const double fade=std::clamp((length-age)/(0.002*sampleRate),0.0,1.0);
@@ -93,8 +120,6 @@ private:
             if(elapsed<event.width)
                 force+=event.force*std::sin(3.14159265358979323846*(elapsed+0.5)/event.width);
         }
-        random^=random<<13;random^=random>>17;random^=random<<5;
-        force*=1+roughness*(random/2147483648.0-1.0)*1.5;
         const double excitation=force-previousForce;previousForce=force;
         const double value=excitation+state[0];
         for(size_t i=0;i<state.size()-1;++i)
@@ -107,7 +132,9 @@ private:
     double sampleRate=44100,step=1,position=0,previousForce=0,eventStretch=1;
     int generated=-1,length=1,age=0,midiNote=60,bank=0;
     size_t contact=0;
-    float gain=0,roughness=0,release=1;
+    float gain=0,release=1;
+    double raspValue=0.55f,raspTarget=0.55f,raspPole=0,tonePole=0,envelopePole=0;
+    double tone=0,envelope=0;
     std::uint32_t random=0x1234abcd;
     bool active=false,releasing=false;
 };
