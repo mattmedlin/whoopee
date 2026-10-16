@@ -4,6 +4,7 @@ import { Client, GatewayIntentBits, ChannelType, PermissionFlagsBits, MessageFla
 import { joinVoiceChannel, createAudioPlayer, createAudioResource, entersState,
   AudioPlayerStatus, VoiceConnectionStatus, StreamType } from '@discordjs/voice';
 import { render, renderer } from './render.mjs';
+import { soundOptions } from './presets.mjs';
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildVoiceStates] });
 const sessions = new Map();
@@ -53,8 +54,10 @@ client.on('interactionCreate', async interaction => {
     // Recheck after async permission lookup before acquiring the per-server lock.
     if (busy.has(guild)) { await interaction.editReply('One rip at a time—try again in a moment.'); return; }
     busy.add(guild); locked = true;
-    const pcm = await render({ pitch: interaction.options.getNumber('pitch') ?? 0,
-      duration: interaction.options.getNumber('duration') ?? 0.8, rasp: interaction.options.getNumber('rasp') ?? 0.55 });
+    const pcm = await render(soundOptions(interaction.options.getString('preset'), {
+      pitch: interaction.options.getNumber('pitch'), duration: interaction.options.getNumber('duration'),
+      rasp: interaction.options.getNumber('rasp'),
+    }));
     let session = sessions.get(guild);
     if (session && session.channelId !== channel.id) {
       await interaction.editReply('Whoopee is now in another channel. Try again there.'); return;

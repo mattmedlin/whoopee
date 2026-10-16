@@ -55,5 +55,22 @@ test('slash commands serialize with server-only controls', async () => {
   const { commands } = await import('../src/commands.mjs');
   assert.deepEqual(commands.map(command => command.name), ['fart', 'whoopee-leave']);
   assert.equal(commands[0].dm_permission, false);
-  assert.deepEqual(commands[0].options.map(option => [option.min_value, option.max_value]), [[-24, 24], [0.08, 3], [0, 1]]);
+  assert.deepEqual(commands[0].options.filter(option => option.name !== 'preset').map(option => [option.min_value, option.max_value]), [[-24, 24], [0.08, 3], [0, 1]]);
+});
+
+
+test('presets render audible audio and explicit zero overrides are preserved', async () => {
+  const { presets, soundOptions } = await import('../src/presets.mjs');
+  assert.deepEqual(soundOptions(null), { pitch: 0, duration: 0.8, rasp: 0.55 });
+  assert.deepEqual(soundOptions('fog-horn', { pitch: 0, rasp: 0 }), { pitch: 0, duration: 3, rasp: 0 });
+  assert.throws(() => soundOptions('missing'));
+  const { commands } = await import('../src/commands.mjs');
+  assert.deepEqual(commands[0].options[0].choices.map(c => c.value), presets.map(p => p.id));
+  for (const preset of presets) {
+    const pcm = await render(soundOptions(preset.id));
+    assert.equal(pcm.length, Math.round(48000 * preset.duration) * 4);
+    let energy = 0;
+    for (let i = 0; i < pcm.length; i += 4) energy += pcm.readInt16LE(i) ** 2;
+    assert.ok(energy / (pcm.length / 4) > 100, preset.name);
+  }
 });

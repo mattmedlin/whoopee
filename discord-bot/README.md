@@ -10,6 +10,21 @@ Play the same reference-fitted physical model as the Whoopee instrument in a Dis
 
 Pitch: −24…24 semitones. Duration: 0.08…3 seconds. Rasp: 0…1. Defaults match the app: 0, 0.8, 0.55, with output at −9 dB. One sound plays at a time per server. The bot leaves after 60 seconds idle, cannot be pulled away by someone in another channel, and uses private command replies. Regular voice channels only; Stage channels are not supported.
 
+## Presets
+
+Use `/fart preset:` and choose from the menu. Pitch, duration, and rasp options override the selected preset when supplied.
+
+| Preset | Sound |
+| --- | --- |
+| The Fog Horn | Long and deep |
+| Sneak Attack | Short and quick |
+| Rumble Seat | Low and raspy |
+| Squeaky Cheeks | Tiny and high |
+| The Lawn Mower | Long and gritty |
+| Velvet Toot | Soft and mellow |
+| Whoops | One quick rip |
+| The Board Meeting | Uncomfortably long |
+
 ## 1. Build the sound engine
 
 Install **Node.js 22.12 or newer**, CMake 3.22+, and a C++17 compiler (Xcode Command Line Tools on Mac, Visual Studio C++ on Windows, GCC/Clang on Linux). From the repository root:
