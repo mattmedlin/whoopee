@@ -30,8 +30,8 @@ client.on('interactionCreate', async interaction => {
   let locked = false;
   try {
     await interaction.deferReply({ flags: MessageFlags.Ephemeral });
-    if (!interaction.inGuild() || guild !== process.env.DISCORD_GUILD_ID) {
-      await interaction.editReply('This bot is configured for a different server.'); return;
+    if (!interaction.inGuild()) {
+      await interaction.editReply('Use this command in a server voice channel.'); return;
     }
     const member = await interaction.guild.members.fetch(interaction.user.id);
     const channel = member.voice.channel;
@@ -98,11 +98,11 @@ for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, () => {
 });
 
 try {
-  if (!process.env.DISCORD_TOKEN || !/^\d+$/.test(process.env.DISCORD_GUILD_ID || '')) throw new Error('Missing config');
+  if (!process.env.DISCORD_TOKEN) throw new Error('Missing config');
   await access(renderer);
   await client.login(process.env.DISCORD_TOKEN);
 } catch {
-  console.error('Startup failed. Build whoopee_render and configure DISCORD_TOKEN and DISCORD_GUILD_ID in .env.');
+  console.error('Startup failed. Build whoopee_render and configure DISCORD_TOKEN in .env.');
   client.destroy();
   process.exitCode = 1;
 }

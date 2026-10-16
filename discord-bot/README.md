@@ -29,9 +29,8 @@ This build does not download JUCE or build the desktop plugins. On Windows the d
 2. Generate/reset its bot token and keep it private. No privileged gateway intents are needed; leave Message Content, Server Members, and Presence intents off.
 3. Copy the **Application ID** from General Information.
 4. Under **OAuth2 → URL Generator**, select `bot` and `applications.commands`. Select only **View Channels**, **Connect**, and **Speak** bot permissions. Open the generated URL and install into a server you manage.
-5. Enable Developer Mode in Discord's Advanced settings. Right-click your server and copy its server ID.
 
-The bot only accepts commands in the server configured below. Users must be in a voice channel where the bot has permission to connect and speak. Channel overrides may need adjustment even after installation.
+Global commands are available in every server that installs the bot. Users must be in a voice channel where the bot has permission to connect and speak. Channel overrides may need adjustment even after installation.
 
 ## 3. Configure and run
 
@@ -40,7 +39,6 @@ Copy `.env.example` to `.env` inside `discord-bot`, then fill in:
 ```dotenv
 DISCORD_TOKEN=your_private_bot_token
 DISCORD_CLIENT_ID=your_application_id
-DISCORD_GUILD_ID=your_server_id
 ```
 
 `.env` is ignored by Git. Never put a token in source code, screenshots, or issues. If exposed, reset it in the Developer Portal.
@@ -50,7 +48,7 @@ npm run register
 npm start
 ```
 
-Registration installs `/fart` and `/whoopee-leave` in that server. Repeat registration only when commands or server IDs change. Join voice, type `/fart` in a text channel, and enjoy. Stop the process with Ctrl+C. To use environment variables supplied by a host instead of a file, run `node src/register.mjs` and `node src/index.mjs` directly.
+Registration publishes `/fart` and `/whoopee-leave` globally. Repeat registration only when commands change. Discord may take a little time to refresh the command list; reopen Discord if needed. No server ID is required. Join voice, type `/fart` in a text channel, and enjoy. Stop the process with Ctrl+C. To use environment variables supplied by a host instead of a file, run `node src/register.mjs` and `node src/index.mjs` directly.
 
 ## Checks and troubleshooting
 
@@ -61,7 +59,7 @@ npm test
 Tests require the renderer built in step 1. They check control validation, duration, audible stereo output, pitch/rasp changes, and Opus encoding without contacting Discord. Real voice playback still needs a configured bot and a live server.
 
 - **Startup failed:** check `.env`, Node version, and the renderer executable path.
-- **Commands missing:** confirm registration used the right application and server IDs and the invite included `applications.commands`.
+- **Commands missing:** confirm registration used the right application ID and the invite included `applications.commands`.
 - **No audio:** check channel permissions, server mute, and the bot's per-user volume. The hosting network must allow Discord voice UDP traffic.
 - **Another channel / one rip at a time:** wait for playback or idle disconnect, or use `/whoopee-leave` while in the bot's channel.
 
