@@ -1,0 +1,17 @@
+{
+  "name": "whoopee-discord-bot",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=22.12.0" },
+  "scripts": {
+    "start": "node --env-file=.env src/index.mjs",
+    "register": "node --env-file=.env src/register.mjs",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "@discordjs/voice": "0.19.2",
+    "discord.js": "14.27.0",
+    "opusscript": "0.0.8"
+  }
+}

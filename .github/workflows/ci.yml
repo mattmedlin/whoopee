@@ -1,6 +1,22 @@
 name: Build Whoopee
 on: [push, pull_request, workflow_dispatch]
 jobs:
+  discord-bot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: discord-bot/package-lock.json
+      - run: cmake -S . -B build-bot -DWHOOPEE_BUILD_PLUGIN=OFF -DCMAKE_BUILD_TYPE=Release
+      - run: cmake --build build-bot --parallel 2
+      - run: ctest --test-dir build-bot --output-on-failure
+      - run: npm ci --ignore-scripts
+        working-directory: discord-bot
+      - run: npm test
+        working-directory: discord-bot
   build:
     strategy:
       matrix:

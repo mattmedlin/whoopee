@@ -38,6 +38,12 @@ The Mac builds have a local ad-hoc signature and **are not Apple-notarized**. ma
 
 If it is missing, check **Logic Pro → Settings → Plug-in Manager**, then **Reset & Rescan Selection**. New Audio Units may need a Mac restart to be discovered. For a VST3 host, copy `Whoopee.vst3` into `~/Library/Audio/Plug-Ins/VST3/` and rescan.
 
+## Discord bot
+
+Want Whoopee in voice chat? The repo includes a self-hosted Discord bot with `/fart`, optional pitch/duration/rasp controls, and `/whoopee-leave`. It uses the same sound engine as the app and disconnects after a minute idle.
+
+See the [Discord bot setup guide](discord-bot/README.md). Requires Node.js, a local C++ renderer build, and your own Discord bot token. The bot is included in the repository source; the v1.0.1 release ZIP predates it.
+
 ## The knobs
 
 | Control | What it does |
