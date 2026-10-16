@@ -1,44 +1,54 @@
-# nucube
+# Whoopee
 
-**Give it a task. It builds the cluster.**
+A MIDI fart instrument using a reference-fitted contact/resonator model. Half-sine contact forces drive four damped modes; eight voices support MIDI, pitch shifting and turbulence variation.
 
-An open-source agentic compute orchestrator: an existing agent submits executable batch work; ordinary CPU workers execute it without additional AI models.
+This is **physical resonator synthesis with a fitted excitation trajectory**, not an autonomous anatomical simulation. The close reference match depends on 420 contact events identified from the recording. No PCM is played at runtime. See [model details and decoding limitations](tools/MODEL.md).
 
-Status: local MVP. Docker containers share your existing machine's capacity; nucube does **not** provision machines, add capacity, or support cloud or Kubernetes backends. Single controller, trusted local users, independent tasks only.
+## Build
 
-## Try it locally
+Requires CMake 3.22+, Git, and a C++17 compiler (Xcode Command Line Tools on macOS or Visual Studio 2022 with C++ on Windows). The first configure downloads JUCE 8.0.6 and its bundled VST3 SDK.
 
-Install Python 3.12+, [uv](https://docs.astral.sh/uv/getting-started/installation/), and Docker Engine/Docker Desktop, then:
-
-```bash
-uv sync --locked
-docker pull python:3.12-slim
-uv run nucube doctor
-uv run nucube serve
+```sh
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build --config Release --parallel 2
+ctest --test-dir build -C Release --output-on-failure
 ```
 
-In another terminal:
+Outputs are under `build/Whoopee_artefacts/Release/`:
 
-```bash
-uv run nucube run examples/cpu/job.yaml --wait
-uv run python examples/benchmark.py --workers 2
+- `VST3/Whoopee.vst3` — copy to your DAW's VST3 directory, then rescan plugins.
+- `AU/Whoopee.component` on macOS — copy to `~/Library/Audio/Plug-Ins/Components/` for Logic Pro.
+- `Standalone/Whoopee.app` on macOS or `Standalone/Whoopee.exe` on Windows — launch to play without a DAW.
+
+On macOS, the user VST3 directory is `~/Library/Audio/Plug-Ins/VST3/`. On Windows, the standard directory is `C:\Program Files\Common Files\VST3\`. This project does not install files automatically. Logic uses the included Audio Unit build, not VST3.
+
+## Play
+
+Load Whoopee as an instrument on a MIDI track, then play notes or click **LET IT RIP**. MIDI note 60 with Pitch 0 and Rasp 0.55 reproduces the fitted reference trajectory. Velocity controls intensity; note-off releases the sound over 25 ms. Voices also end at the configured duration. The preview button plays a full-length note.
+
+- **Pitch:** -24 to +24 semitones relative to each MIDI note.
+- **Duration:** 0.08–3 seconds; spreads or compresses the contact sequence to fill the selected time. Applies to newly triggered notes. Hold MIDI notes to hear the full duration.
+- **Rasp:** varies the fitted contact forces with turbulence; 0.55 preserves the fitted forces.
+- **Volume:** -48 to 0 dB with smoothing; affects all voices.
+
+Pitch transposes the resonator; Duration determines the overall contact-sequence length independently. Pitch, duration, rasp, and volume support host automation and session recall. MIDI all-notes-off/all-sound-off silences all voices. Output is mono-compatible stereo with a safety clamp.
+
+## DSP checks without JUCE
+
+```sh
+cmake -S . -B build/dsp -DWHOOPEE_BUILD_PLUGIN=OFF
+cmake --build build/dsp
+ctest --test-dir build/dsp --output-on-failure
 ```
 
-`run` returns a job ID immediately without `--wait`. Source and JSON inputs are snapshotted at submission; each attempt gets its own output directory. The controller enforces image/network policy, CPU/memory/worker budgets, deadlines and bounded retries. Jobs, tasks and attempts persist in SQLite. Containers are removed after completion; outputs remain until configured retention expires.
+CI builds VST3, standalone, and (on macOS) Audio Unit targets on macOS and Windows, runs the DSP checks, and uploads the binaries. DAW scanning, playback, and session recall still need a manual smoke test in your host.
 
-The official Python MCP SDK exposes `submit_job`, `get_job`, `list_jobs`, `get_task_logs`, `list_artifacts`, `read_artifact` and `cancel_job` through `nucube mcp`. CLI and MCP use the same controller. No model API keys or paid services are needed.
+## License
 
-## Read more
+Original project source is covered by the Apache-2.0 license in `LICENSE`. JUCE is a separate dependency with its own AGPLv3/commercial licensing terms; choose the appropriate JUCE license before distributing binaries. See [JUCE licensing](https://juce.com/legal/juce-8-licence/).
 
-- [Quickstart, commands and independent reaper](docs/quickstart.md)
-- [Architecture, recovery and orchestration context](docs/architecture.md)
-- [Manifest and policy reference](docs/manifest.md)
-- [Agent/MCP setup](docs/mcp.md)
-- [Security model and limitations](docs/security.md)
-- [Local verification and benchmark](docs/verification.md)
-- [Dependency documentation and lockfile](docs/dependencies.md)
-- [Contributing](CONTRIBUTING.md) and [security reporting](SECURITY.md)
+This repository replaces the former NuCube implementation. Its previous source remains available in Git history.
 
-Execution can be **at least once** after failures: retryable work must tolerate repetition. This is user-authorized local execution, not a hostile multi-tenant sandbox. Writable output directories have no live disk quota. Worker wall-clock deadlines require the controller or periodically scheduled reaper. Loopback-only operation has no multi-user authentication. No cloud capacity or dollar-budget enforcement is implemented.
+## Reference calibration
 
-Licensed under [Apache-2.0](LICENSE).
+See [the reproducible identification and verification workflow](tools/MODEL.md). The source WAV is login-gated, so the available MP3 is decoded to floating-point PCM without additional quantization. Verification compares native-rate generated WAVs directly, including waveform error and short-time structure, rather than only matching broad frequency bands.

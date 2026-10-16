@@ -1,25 +1,23 @@
-name: checks
-on: [push, pull_request]
-permissions:
-  contents: read
+name: Build Whoopee
+on: [push, pull_request, workflow_dispatch]
 jobs:
-  python:
-    runs-on: ubuntu-latest
+  build:
     strategy:
       matrix:
-        python: ['3.12', '3.13']
+        os: [macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v6
+      - name: Configure
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+      - name: Build
+        run: cmake --build build --config Release --parallel 2
+      - name: Test
+        run: ctest --test-dir build -C Release --output-on-failure
+      - uses: actions/upload-artifact@v4
         with:
-          version: '0.12.22'
-          python-version: ${{ matrix.python }}
-      - run: uv sync --locked
-      - run: uv run ruff check src tests examples
-      - run: uv run ruff format --check src tests examples
-      - run: uv run mypy src
-      - run: uv run pytest -q -m 'not docker'
-      - run: docker pull python:3.12-slim
-      - run: uv run pytest -q -m docker
-        env:
-          NUCUBE_DOCKER_TESTS: '1'
+          name: Whoopee-${{ matrix.os }}
+          path: |
+            build/Whoopee_artefacts/Release/AU/
+            build/Whoopee_artefacts/Release/VST3/
+            build/Whoopee_artefacts/Release/Standalone/
